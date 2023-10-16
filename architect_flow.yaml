@@ -1,0 +1,164 @@
+inboundCall:
+  name: Uber Proof of Concept
+  description: Proof of concept for using Deepgram's AudioHook integration in a voice bot.
+  division: Home
+  startUpRef: "/inboundCall/tasks/task[New Task 1_15]"
+  defaultLanguage: en-us
+  supportedLanguages:
+    en-us:
+      defaultLanguageSkill:
+        noValue: true
+      textToSpeech:
+        defaultEngine:
+          voice: Jill
+  settingsActionDefaults:
+    playAudioOnSilence:
+      timeout:
+        lit:
+          seconds: 40
+    detectSilence:
+      timeout:
+        lit:
+          seconds: 40
+    callData:
+      processingPrompt:
+        noValue: true
+    collectInput:
+      noEntryTimeout:
+        lit:
+          seconds: 5
+    dialByExtension:
+      interDigitTimeout:
+        lit:
+          seconds: 6
+    transferToUser:
+      connectTimeout:
+        noValue: true
+    transferToNumber:
+      connectTimeout:
+        noValue: true
+    transferToGroup:
+      connectTimeout:
+        noValue: true
+    transferToFlowSecure:
+      connectTimeout:
+        lit:
+          seconds: 15
+  settingsErrorHandling:
+    errorHandling:
+      disconnect:
+        none: true
+    preHandlingAudio:
+      tts: Sorry, an error occurred. Please try your call again.
+  settingsMenu:
+    extensionDialingMaxDelay:
+      lit:
+        seconds: 1
+    listenForExtensionDialing:
+      lit: true
+    menuSelectionTimeout:
+      lit:
+        seconds: 10
+    repeatCount:
+      lit: 3
+  settingsPrompts:
+    ensureAudioInPrompts: false
+    promptMediaToValidate:
+      - mediaType: audio
+      - mediaType: tts
+  settingsSpeechRec:
+    completeMatchTimeout:
+      lit:
+        ms: 100
+    incompleteMatchTimeout:
+      lit:
+        ms: 1500
+    maxSpeechLengthTimeout:
+      lit:
+        seconds: 20
+    minConfidenceLevel:
+      lit: 50
+    asrCompanyDir: none
+    asrEnabledOnFlow: true
+    suppressRecording: false
+  tasks:
+    - task:
+        name: New Task 1
+        refId: New Task 1_15
+        variables:
+          - stringVariable:
+              name: Task.main_intent
+              initialValue:
+                noValue: true
+              isInput: false
+              isOutput: false
+        actions:
+          - playAudio:
+              name: Play Audio
+              audio:
+                tts: Hello. What would you like to do today?
+          - transcription:
+              name: Transcription
+              enableTranscription:
+                lit: true
+          - callData:
+              name: Call Data Action
+              processingPrompt:
+                noValue: true
+              timeout:
+                lit:
+                  seconds: 20
+              category:
+                Voicebot - Get Main Intent:
+                  dataAction:
+                    Voicebot - Get Main Intent Action:
+                      inputs:
+                        conversationId:
+                          exp: Call.ConversationId
+                      successOutputs:
+                        intent:
+                          var: Task.main_intent
+              outputs:
+                success:
+                  actions:
+                    - switch:
+                        name: Switch
+                        evaluate:
+                          firstTrue:
+                            default:
+                              actions:
+                                - playAudio:
+                                    name: Play Audio
+                                    audio:
+                                      tts: I'm sorry, I couldn't hear what you said.
+                            cases:
+                              - case:
+                                  value:
+                                    exp: Task.main_intent == "book_ride"
+                                  actions:
+                                    - playAudio:
+                                        name: Play Audio
+                                        audio:
+                                          tts: You have chosen to book a ride.
+                              - case:
+                                  value:
+                                    exp: Task.main_intent == "order_food"
+                                  actions:
+                                    - playAudio:
+                                        name: Play Audio
+                                        audio:
+                                          tts: You have chosen to order food.
+                failure:
+                  actions:
+                    - playAudio:
+                        name: Play Audio
+                        audio:
+                          tts: Error calling data action.
+                timeout:
+                  actions:
+                    - playAudio:
+                        name: Play Audio
+                        audio:
+                          tts: Timed out waiting for response from data action.
+          - disconnect:
+              name: Disconnect
